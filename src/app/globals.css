@@ -1,0 +1,156 @@
+@import "tailwindcss";
+
+:root {
+  /* Tech/Cyber Dark Theme */
+  --background: #0a0e17;
+  --foreground: #e4e8f1;
+  --primary: #00d4ff;
+  --primary-dark: #00a8cc;
+  --primary-glow: rgba(0, 212, 255, 0.3);
+  --secondary: #8b5cf6;
+  --secondary-dark: #7c3aed;
+  --accent: #00ff88;
+  --card: #111827;
+  --card-hover: #1a2234;
+  --surface: #1e293b;
+  --surface-hover: #2d3a4f;
+  --border: #2d3748;
+  --border-glow: rgba(0, 212, 255, 0.15);
+  --text-secondary: #8b9dc3;
+  --text-muted: #5a6a85;
+  --success: #00ff88;
+  --error: #ff4757;
+  --warning: #ffa502;
+  --info: #00d4ff;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-dark: var(--primary-dark);
+  --color-primary-glow: var(--primary-glow);
+  --color-secondary: var(--secondary);
+  --color-secondary-dark: var(--secondary-dark);
+  --color-accent: var(--accent);
+  --color-card: var(--card);
+  --color-card-hover: var(--card-hover);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-border: var(--border);
+  --color-border-glow: var(--border-glow);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-success: var(--success);
+  --color-error: var(--error);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'JetBrains Mono', 'Fira Code', Inter, system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--surface);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+/* Glow effects */
+.glow-primary {
+  box-shadow: 0 0 20px var(--primary-glow);
+}
+
+.glow-text {
+  text-shadow: 0 0 10px var(--primary-glow);
+}
+
+/* Gradient backgrounds */
+.gradient-primary {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+}
+
+.gradient-dark {
+  background: linear-gradient(180deg, var(--background) 0%, var(--card) 100%);
+}
+
+/* Border glow on focus */
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-glow);
+}
+
+/* Button hover effects */
+button, .btn {
+  transition: all 0.2s ease;
+}
+
+button:hover, .btn:hover {
+  transform: translateY(-1px);
+}
+
+@layer utilities {
+  .container-custom {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  .text-gradient {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .border-glow {
+    border: 1px solid var(--border);
+    transition: all 0.3s ease;
+  }
+
+  .border-glow:hover {
+    border-color: var(--primary);
+    box-shadow: 0 0 15px var(--primary-glow);
+  }
+}
+
+/* Animation for loading states */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--primary-glow);
+  }
+  50% {
+    box-shadow: 0 0 20px var(--primary-glow), 0 0 30px var(--primary-glow);
+  }
+}
+
+.animate-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Code-like elements */
+code, pre {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}

@@ -1,0 +1,298 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String        @id @default(cuid())
+  email         String        @unique
+  username      String?       @unique
+  name          String?
+  password      String
+  role          String        @default("STUDENT")
+  customRoleId  String?
+  customRole    UserRole?     @relation(fields: [customRoleId], references: [id])
+  image         String?
+  bio           String?
+  isApproved    Boolean       @default(false)
+  isActive      Boolean       @default(true)
+  isBlocked     Boolean       @default(false)
+  pushSubscription String?    // For push notifications
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  enrollments   Enrollment[]
+  progress      LessonProgress[]
+  quizAttempts  QuizAttempt[]
+  payments      Payment[]
+  notifications Notification[]
+  chatRooms     ChatParticipant[]
+  sentMessages  ChatMessage[]
+  profile       UserProfile?
+  roleGrants    UserRoleGrant[]
+  hostedStreams LiveStream[]
+}
+
+model Course {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  imageUrl    String?
+  price       Float        @default(0)
+  isPublished Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  chapters    Chapter[]
+  enrollments Enrollment[]
+  prize       String?
+  chatRooms   ChatRoom[]
+  liveStreams LiveStream[]
+}
+
+model Chapter {
+  id        String   @id @default(cuid())
+  title     String
+  imageUrl  String?
+  position  Int
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons   Lesson[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Lesson {
+  id        String   @id @default(cuid())
+  title     String
+  position  Int
+  chapterId String
+  chapter   Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  type      String
+  content   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  progress  LessonProgress[]
+}
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  status    String   @default("PENDING")  // PENDING, APPROVED, DENIED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([userId, courseId])
+}
+
+model LessonProgress {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId  String
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  completed Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+  @@unique([userId, lessonId])
+}
+
+model QuizAttempt {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId  String
+  score     Float
+  answers   String
+  createdAt DateTime @default(now())
+}
+
+model Payment {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId      String?
+  amount        Float
+  currency      String   @default("NGN")
+  status        String   @default("pending")
+  reference     String   @unique
+  paystackRef   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  type        String   // USER_SIGNUP, ENROLLMENT_REQUEST, PAYMENT, GENERAL
+  title       String
+  message     String
+  data        String?  // JSON string for additional data
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model Announcement {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  type        String   // BANNER, POPUP, FLYER
+  imageUrl    String?
+  linkUrl     String?
+  isActive    Boolean  @default(false)
+  position    Int      @default(0)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PaymentButton {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  amount      Float
+  currency    String   @default("NGN")
+  buttonText  String   @default("Pay Now")
+  buttonColor String   @default("#6366f1")
+  redirectUrl String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SiteSettings {
+  id          String   @id @default(cuid())
+  siteName    String   @default("Tech With Cisco")
+  siteDescription String?
+  logoUrl     String?
+  contactEmail String?
+  contactPhone String?
+  socialLinks String?  // JSON: {facebook, twitter, instagram, linkedin}
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  userEmail   String?
+  action      String   // LOGIN, LOGOUT, ENROLL, COURSE_ACCESS, etc.
+  description String
+  ipAddress   String?
+  userAgent  String?
+  createdAt   DateTime @default(now())
+}
+
+// ============== CHAT & MESSAGING MODELS ==============
+
+model ChatRoom {
+  id          String   @id @default(cuid())
+  name        String?
+  type        String   // GLOBAL, COURSE, DIRECT
+  courseId    String?
+  course      Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  participants ChatParticipant[]
+  messages    ChatMessage[]
+}
+
+model ChatParticipant {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chatRoomId String
+  chatRoom  ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  role      String   @default("MEMBER") // ADMIN, MODERATOR, MEMBER
+  joinedAt  DateTime @default(now())
+  @@unique([userId, chatRoomId])
+}
+
+model ChatMessage {
+  id          String   @id @default(cuid())
+  content     String
+  imageUrl    String?
+  chatRoomId  String
+  chatRoom    ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  senderId    String
+  sender      User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  isDeleted   Boolean  @default(false)
+  isBlocked   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model UserProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio           String?
+  phone         String?
+  location      String?
+  website       String?
+  socialLinks   String?  // JSON: {twitter, linkedin, github}
+  notificationSettings String? // JSON: {email, push, digest}
+  onboardingComplete Boolean @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ============== ROLE & PERMISSION SYSTEM ==============
+
+model UserRole {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  permissions String   // JSON: ["manage_users", "manage_courses", "stream", "moderate_chat", etc.]
+  color       String   @default("#6366f1")
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       User[]
+  grants      UserRoleGrant[]
+}
+
+model UserRoleGrant {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roleId    String
+  role      UserRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  grantedBy String?
+  createdAt DateTime @default(now())
+  @@unique([userId, roleId])
+}
+
+// ============== LIVE STREAMING ==============
+
+model LiveStream {
+  id            String   @id @default(cuid())
+  title         String
+  description   String?
+  status        String   @default("SCHEDULED") // SCHEDULED, LIVE, ENDED
+  streamUrl     String?
+  viewerUrl     String?
+  courseId      String?
+  course        Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  hostId        String
+  host          User     @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  startedAt     DateTime?
+  endedAt       DateTime?
+  createdAt     DateTime @default(now())
+  viewers       StreamViewer[]
+}
+
+model StreamViewer {
+  id          String   @id @default(cuid())
+  streamId    String
+  stream      LiveStream @relation(fields: [streamId], references: [id], onDelete: Cascade)
+  userId      String
+  joinedAt    DateTime @default(now())
+  @@unique([streamId, userId])
+}
