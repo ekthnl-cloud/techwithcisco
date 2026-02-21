@@ -30,7 +30,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Account suspended. Contact admin.");
         }
 
-        // Check if user is approved (skip for admins)
+        // Check if user is approved (auto-approve admins)
         if (user.role !== "ADMIN" && !user.isApproved) {
           throw new Error("Account pending approval. Please wait for admin to approve your registration.");
         }
