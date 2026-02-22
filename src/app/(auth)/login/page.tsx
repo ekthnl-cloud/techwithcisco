@@ -1,17 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { Code, Lock, Mail } from "lucide-react";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const registered = searchParams.get("registered") === "true";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,6 +60,12 @@ export default function LoginPage() {
           {error && (
             <div className="bg-[#ff4757]/10 border border-[#ff4757]/30 text-[#ff4757] px-4 py-3 rounded-lg mb-4">
               {error}
+            </div>
+          )}
+
+          {registered && (
+            <div className="bg-[#00ff88]/10 border border-[#00ff88]/30 text-[#00ff88] px-4 py-3 rounded-lg mb-4">
+              Account created! Please wait for admin approval, then sign in.
             </div>
           )}
 
@@ -109,5 +118,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen pt-20 flex items-center justify-center bg-[#0a0e17]"><div className="text-[#5a6a85]">Loading...</div></Suspense>}>
+      <LoginForm />
+    </Suspense>
   );
 }

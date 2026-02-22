@@ -33,7 +33,7 @@ export default function RegisterPage() {
         return;
       }
 
-      router.push(`/onboarding?email=${encodeURIComponent(email)}`);
+      router.push("/login?registered=true");
     } catch {
       setError("Something went wrong");
     } finally {
