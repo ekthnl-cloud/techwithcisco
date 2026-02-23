@@ -38,14 +38,19 @@ export async function POST(req: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Check if this is the first user - make them admin
+    const userCount = await prisma.user.count();
+    const role = userCount === 0 ? "ADMIN" : "STUDENT";
+    const isApproved = userCount === 0 ? true : false;
+
     const user = await prisma.user.create({
       data: {
         name,
         username,
         email,
         password: hashedPassword,
-        role: "STUDENT",
-        isApproved: false,
+        role: role,
+        isApproved: isApproved,
         isActive: true,
       },
     });
@@ -72,7 +77,9 @@ export async function POST(req: Request) {
       id: user.id,
       name: user.name,
       email: user.email,
-      message: "Registration successful! Please wait for admin approval.",
+      message: role === "ADMIN" 
+        ? "Registration successful! You are the first admin." 
+        : "Registration successful! Please wait for admin approval.",
     });
   } catch (error) {
     console.error("Registration error:", error);
