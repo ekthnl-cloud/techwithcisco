@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Code, User, AtSign, Lock, Mail } from "lucide-react";
+import { Code, User, AtSign, Lock, Mail, CheckCircle } from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -12,6 +12,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,13 +34,41 @@ export default function RegisterPage() {
         return;
       }
 
-      router.push("/login?registered=true");
+      setSuccess(true);
     } catch {
       setError("Something went wrong");
     } finally {
       setLoading(false);
     }
   };
+
+  if (success) {
+    return (
+      <div className="min-h-screen pt-20 flex items-center justify-center bg-[#0a0e17]">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1a2234] via-[#0a0e17] to-[#0a0e17]"></div>
+        
+        <div className="relative w-full max-w-md px-4">
+          <div className="bg-[#111827]/80 backdrop-blur-lg border border-[#2d3748] rounded-2xl p-8 shadow-2xl text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[#00ff88]/20 flex items-center justify-center">
+              <CheckCircle className="w-8 h-8 text-[#00ff88]" />
+            </div>
+            <h1 className="text-2xl font-bold text-white mb-2">
+              Registration <span className="text-[#00ff88]">Successful!</span>
+            </h1>
+            <p className="text-[#5a6a85] mb-6">
+              Your account has been created. Please wait for admin approval, then sign in.
+            </p>
+            <Link 
+              href="/login" 
+              className="inline-block w-full bg-gradient-to-r from-[#00d4ff] to-[#00a8cc] hover:from-[#00a8cc] hover:to-[#00d4ff] text-white py-3 rounded-lg font-medium transition-all hover:shadow-[0_0_20px_rgba(0,212,255,0.4)]"
+            >
+              Go to Login
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-20 flex items-center justify-center bg-[#0a0e17]">
