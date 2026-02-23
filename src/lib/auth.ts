@@ -1,70 +1,71 @@
 import { NextAuthOptions, getServerSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { prisma } from "@/lib/prisma";
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
+const prisma = new PrismaClient();
+
 export { getServerSession };
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: "credentials",
       credentials: {
-        email: { label: "Email", type: "email" },
+        email: { label: "Email", type: "email", placeholder: "email@example.com" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Invalid credentials");
+          return null;
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        });
+        try {
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email },
+          });
 
-        if (!user || !user.password) {
-          throw new Error("Invalid credentials");
+          if (!user || !user.password) {
+            return null;
+          }
+
+          if (!user.isActive) {
+            return null;
+          }
+
+          if (user.role !== "ADMIN" && !user.isApproved) {
+            return null;
+          }
+
+          const isPasswordValid = await bcrypt.compare(
+            credentials.password,
+            user.password
+          );
+
+          if (!isPasswordValid) {
+            return null;
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+          };
+        } catch (error) {
+          console.error("Auth error:", error);
+          return null;
         }
-
-        // Check if user is active
-        if (!user.isActive) {
-          throw new Error("Account suspended. Contact admin.");
-        }
-
-        // Check if user is approved (auto-approve admins)
-        if (user.role !== "ADMIN" && !user.isApproved) {
-          throw new Error("Account pending approval. Please wait for admin to approve your registration.");
-        }
-
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
-
-        if (!isPasswordValid) {
-          throw new Error("Invalid credentials");
-        }
-
-        // Log login activity
-        await prisma.activityLog.create({
-          data: {
-            userId: user.id,
-            userEmail: user.email,
-            action: "LOGIN",
-            description: "User logged in",
-          },
-        });
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        };
       },
     }),
   ],
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60,
+  },
+  pages: {
+    signIn: "/login",
+    error: "/login",
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -82,7 +83,5 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
-  pages: {
-    signIn: "/login",
-  },
+  secret: process.env.NEXTAUTH_SECRET,
 };
